@@ -1,0 +1,7 @@
+wiki1 ansible_ssh_host=192.168.0.150 ansible_ssh_user=kestrel ansible_ssh_pass=guDh2017
+
+[docker:children]
+wiki
+
+[wiki]
+wiki1

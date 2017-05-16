@@ -1,0 +1,44 @@
+---
+
+#  It is possible to build directly from a git repo to docker, however there seems to be a bug in building armhf on docker,
+#  so instead this script will build the image directly on the PI and upload it. THis script only to be used against a single PI
+
+# This yml will has two plays
+# 1) Idempotently build the image (decide if the docker image of MM has already been built, 
+#    and uploaded to the hub, and if not, will build and upload it.) This will work against 
+#    wiki1 as the 'build' server.
+
+# 2) check each wiki server to see if it has the required version of the wiki and download if not
+
+- hosts: wiki1
+
+  user: kestrel
+  sudo: True
+  vars:
+    username: mazerunner
+    tagname: moinmoin-wiki
+    tag_version: 1.1
+  tasks:
+  # Occasionally pip2 refused to work, saying incompleteRead error
+  # Follow instructions here: http://stackoverflow.com/questions/27341064/how-do-i-fix-importerror-cannot-import-name-incompleteread
+  # Roughly: 
+  #   1) sudo apt-get remove python-pip
+  #   2) sudo easy_install -U pip
+  - name: "Install Docker packages:"
+    pip: 
+      name: "{{ item }}"
+      state: present
+    with_items: 
+      - docker
+
+
+
+  - name: Restart a container
+    docker_container:
+      name: my_wiki
+      image: mazerunner/moinmoin-wiki:1.1
+      state: started
+      restart: yes
+      published_ports:
+       - "443:443"
+       - "80:80"

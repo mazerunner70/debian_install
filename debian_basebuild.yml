@@ -1,0 +1,41 @@
+---
+- hosts: debian_basebuild
+  user: vagrant
+  sudo: True
+  vars:
+    install_source_direcory: /vagrant
+    vagrant_home: /home/vagrant
+
+  tasks:
+    - name: Load aptitude
+      apt: name=aptitude state=present
+
+    - name: Update apt-cache 1
+      apt: update_cache=yes cache_valid_time=3600 upgrade=dist
+
+    - name: Install pip
+      apt: name=python-pip state=latest
+       
+    - name: "Install Python packages:"
+      pip: 
+        name: "{{ item }}"
+        state: present
+      with_items: 
+        - netaddr
+
+
+    - name: Install Vim
+      apt: name=vim state=latest
+       
+ #    - name: download raspbian latest
+#      get_url:
+#        url: https://downloads.raspberrypi.org/raspbian_latest
+#        dest: /home/vagrant/raspbian.zip
+#        mode: 0777
+    - name: move the python scripts to the correct location
+      command: cp -R {{ install_source_direcory }}/scripts {{ vagrant_home }}
+      
+    - name: set ownership correctly
+      file: dest=scripts owner=vagrant group=vagrant recurse=yes
+    - name: make bash scripts executable
+      command: find scripts -name '*.bash' -exec chmod 755 {} \;

@@ -1,0 +1,6 @@
+[raspberrypi]
+
+[raspberrypi:vars]
+ansible_connection=ssh 
+ansible_ssh_user=pi 
+ansible_ssh_pass=guDh2017

@@ -1,0 +1,98 @@
+---
+- hosts: 127.0.0.1
+  user: vagrant
+  become: sudo
+  vars:
+    install_source_direcory: /vagrant
+    vagrant_home: /home/vagrant
+
+  tasks:
+    - debug:
+        msg: "using IP {{ currentip }} "
+
+    - name: adding ip as new hosts
+      add_host: group=raspberrypi name='{{ currentip }}'
+
+- hosts: raspberrypi
+  sudo: True
+  tasks:
+    - debug: var=vars
+    - debug: var=hostvars
+    - debug: 
+        msg: "debian id {{ ansible_lsb }}"
+    - debug: 
+        msg: "debian id {{ ansible_lsb.id }}"
+
+    - name: templating dhcpcd.conf
+      template:
+        src: dhcpcd.conf.j2
+        dest: /etc/dhcpcd.conf
+        backup: yes
+        force: yes
+        group: root
+        owner: root
+        mode: 0664
+
+
+
+    - name: new group
+      group:
+        name: ohara
+        state: present
+
+    - name: Allow 'ohara' group to have passwordless sudo
+      lineinfile:
+        dest: /etc/sudoers
+        state: present
+        regexp: '^%ohara'
+        line: '%ohara ALL=(ALL) NOPASSWD: ALL'
+        validate: 'visudo -cf %s'
+
+
+    - name: add user
+      user:
+        name: kestrel
+        group: ohara
+        groups: ohara
+        password: "{{ kestrel_password }}"
+        generate_ssh_key: yes
+        ssh_key_bits: 2048
+        ssh_key_file: .ssh/id_rsa
+
+    - name: change pi password
+      user:
+        name: pi
+        password: pi_password
+
+    - name: change hosts file
+      lineinfile:
+        path: /etc/hosts
+        regexp: "^127\.0\.1\.1"
+        line: "127.0.1.1\t{{ newhostname }}"
+        backup: yes
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: change hostname
+      lineinfile:
+        path: /etc/hostname
+        regexp: '^raspberrypi'
+        line: '{{ newhostname }}'
+        backup: yes
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: change gpu memory
+      lineinfile:
+        path: /boot/config.txt
+        regexp: '^gpu_mem'
+        line: 'gpu_mem=16'
+        backup: yes
+        owner: root
+        group: root
+        mode: 0755
+
+    - name: Restart server
+      shell: sleep 2 && /sbin/shutdown -r now "Ansible system package upgraded"
