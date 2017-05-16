@@ -10,12 +10,16 @@
     - name: Load aptitude
       apt: name=aptitude state=present
 
-    - name: Update apt-cache 1
+    - name: Update apt-cache
       apt: update_cache=yes cache_valid_time=3600 upgrade=dist
 
-    - name: Install pip
-      apt: name=python-pip state=latest
-       
+    - name: Install list of packages
+      apt: name={{item}} state=installed
+      with_items:
+        - python-pip
+        - vim
+        - nmap
+
     - name: "Install Python packages:"
       pip: 
         name: "{{ item }}"
@@ -24,8 +28,6 @@
         - netaddr
 
 
-    - name: Install Vim
-      apt: name=vim state=latest
        
  #    - name: download raspbian latest
 #      get_url:

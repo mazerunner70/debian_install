@@ -1,4 +1,5 @@
 from subprocess import Popen, PIPE
+import sys
 
 class Arping:
 
@@ -18,9 +19,11 @@ class Arping:
     
 
 if __name__ == '__main__':
-    from ReadNmap import ReadNmap
-    readNmap = ReadNmap()
-    ip = readNmap.findIpOfHost('raspberrypi')
-    arping = Arping()
-    line = arping.execute(ip)
-    print (arping.getMacAddress(line))
+    try:
+      ip = sys.argv[1]
+      arping = Arping()
+      line = arping.execute(ip)
+      print (arping.getMacAddress(line))
+    except BaseException as e:
+      sys.stderr.write (str(e))
+      sys.exit(1)

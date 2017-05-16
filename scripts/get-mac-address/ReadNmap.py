@@ -1,5 +1,5 @@
 from subprocess import Popen, PIPE
-import re
+import re, sys
 
 class ReadNmap:
 
@@ -44,6 +44,11 @@ class ReadNmap:
 
 
 if __name__ == '__main__':
-    readNmap = ReadNmap()
-    ip = readNmap.findIpOfHost('raspberrypi')
-    print (ip)
+    try:
+      readNmap = ReadNmap()
+      ip = readNmap.findIpOfHost('raspberrypi')
+      print (ip)
+    except BaseException as e:
+      sys.stderr.write (str(e))
+      sys.exit(1)
+
