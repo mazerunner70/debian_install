@@ -1,5 +1,5 @@
-kestrel_password: {{ vault_kestrel_password }}
-pi_password: {{ vault_pi_password }}
+kestrel_password: "{{ vault_kestrel_password }}"
+pi_password: "{{ vault_pi_password }}"
 ansible_connection: ssh 
 ansible_ssh_user: pi
 ansible_ssh_pass: raspberry

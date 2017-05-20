@@ -2,28 +2,39 @@ from subprocess import Popen, PIPE
 from pathlib import Path
 import time
 import subprocess
+from LinuxBlockViewer import LinuxBlockViewer
+import sys
 
 class FormatSdCard:
 
-    def listBlockDevices(self):
-        process = Popen(["lsblk", "-dPo","name,rm"], stdout=PIPE,stderr=PIPE)
-        response = process.communicate()
-        error = response[1]
-        if len(error) > 0:
-            raise RuntimeError("error checking block devices")
-        stdout = response[0].decode("utf-8").split("\n")
-        return stdout[:-1]
+    def validateSdCardReady(self):
+        # 1. confirm that the removeable drive is present
+        # 2. check if any mounts have already been setup
+        # 3. unmount where neecessary
+        # 4. return the drive block id
+        # Step 1
+        blockViewer = LinuxBlockViewer()
+        blockDevicesRawText = blockViewer.getLsblkOutputText()
+        removeableDriveIds = blockViewer.getRemoveableDriveId(blockDevicesRawText)
+        if len(removeableDriveIds) != 1:
+            raise RuntimeError('expected 1 removeable drive, found '+removeableDriveIds)
+        response = raw_input('Found removeable disc named "'+removeableDriveIds[0]+'". Proceed? [y/N]')
+        if response.capitalize() != 'Y':
+            print("Exiting...")
+            sys.exit(0)
+        # Step 2
+        mountedBlocks = blockViewer.getBlocksForDriveId(blockDevicesRawText, removeableDriveIds[0])
+        if len(mountedBlocks)>0:
+            print ('Drive {} has {} blocks mounted. {}'.format(removeableDriveIds[0], len(mountedBlocks), mountedBlocks))
+            response = raw_input('These will need to be unmounted. Proceed?[y/N]')
+            if response.capitalize() != 'Y':
+                print("Exiting...")
+                sys.exit(0)
+        # Step 3
+            for block in mountedBlocks:
+                blockViewer.unmountBlock(blockDevicesRawText, block)
+        return removeableDriveIds[0]
 
-    def findRemoveableBlockDevice(self):
-        blockDevices = self.listBlockDevices()
-        removeableBlockDevice = ""
-        for blockDevice in blockDevices:
-            if blockDevice.find('RM="1"') != -1 and removeableBlockDevice == "" :
-                removeableBlockDevice = blockDevice[6:9]
-        print( "Block found to write to:", removeableBlockDevice)
-        if len(removeableBlockDevice) != 3:
-            raise RuntimeError("Expected 3 letter id for block")
-        return removeableBlockDevice
 
     def findRaspbianImage(self):
         vagrantShare = Path('/vagrant')
@@ -48,14 +59,16 @@ class FormatSdCard:
     def calculateProgress(self, line, raspbianImageFileSize):
 #        print ("line:", line)
         progressLineChunks = line.split(' ')
-#        print (progressLineChunks)
-        progress = int(progressLineChunks[0])
+ #       print (progressLineChunks)
+        progress = float(progressLineChunks[0])
+        print (progress)
         return progress / raspbianImageFileSize
 
     def executeFormatCommand(self):
-        blockDevice = self.findRemoveableBlockDevice()
+        blockDevice = self.validateSdCardReady()
         raspbianImage = self.findRaspbianImage()
         raspbianImageFileSize = raspbianImage.stat().st_size
+        print ('Image file size: '+ str(raspbianImageFileSize))
         print ('Executing command "dd bs=4M if={} of=/dev/{}"'.format(raspbianImage, blockDevice))
         process = Popen(["sudo",
                          "dd",
@@ -75,6 +88,8 @@ class FormatSdCard:
             time.sleep(10)
         print ("Imaging completed successfully")
     
-
+if __name__ == '__main__':
+    cd = FormatSdCard()
+    cd.executeFormatCommand()
     
                         

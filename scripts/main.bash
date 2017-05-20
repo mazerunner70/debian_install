@@ -34,20 +34,19 @@ if [ $option -eq 2 ] || [ $option -eq 1 ]; then
     fi
     echo Raspberry Pi found at IP $ip_address
  
-    mac_address=`/usr/bin/python3.5 Arping.py` $ip_address
+    mac_address=`/usr/bin/python3.5 Arping.py $ip_address`
     echo Raspberry Pi mac address of ethernet is $mac_address
-    exit 1
-
+  
     new_ip=`/usr/bin/python3.5 Properties.py $mac_address`
     echo Raspberry Pi will have IP $new_ip
   
     new_hostname=`/usr/bin/python3.5 Properties.py $new_ip`
-    echo Raspberry Pi will have hostname $new_hostnam
+    echo Raspberry Pi will have hostname $new_hostname
   
     cd ..
 
     cd set-static-ip
-    ansible-playbook set-static-ip.yml -i inventory -e currentip=$ip_address -e newip=$new_ip -e newhostname=$new_hostname
+    ansible-playbook set-static-ip.yml -i inventory -e currentip=$ip_address -e newip=$new_ip -e newhostname=$new_hostname --ask-vault-pass
     cd ..
   
 fi  

@@ -1,10 +1,12 @@
 #!/bin/bash
 
-/usr/bin/python3.5 <<END
-from FormatSd import FormatSdCard
-cd = FormatSdCard()
-cd.executeFormatCommand()
-END
+/usr/bin/python FormatSd.py
+
+echo last command ended with a "$?"
+if [[ "$?" -eq "1" ]]; then
+	echo "exiting..."
+	exit 1 
+fi
 sudo sync
 mkdir -p /home/vagrant/sdb1
 sudo mount /dev/sdb1 /home/vagrant/sdb1

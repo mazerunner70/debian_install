@@ -27,7 +27,13 @@
       with_items: 
         - netaddr
 
-
+    - name: dev locale
+      action: command sudo update-locale LC_ALL=en_GB.utf8
+    - name: set default locale
+      sudo: yes
+      lineinfile: dest=/etc/default/locale
+        regexp="LC_ALL"
+        line="LC_ALL=\"en_GB.utf8\""
        
  #    - name: download raspbian latest
 #      get_url:
